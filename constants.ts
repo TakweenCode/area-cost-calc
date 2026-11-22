@@ -4,13 +4,62 @@ export const M_TO_FT = 3.280839895;
 export const SQM_TO_SQFT = 10.763910417;
 
 export const PRODUCTS: Product[] = [
-  { id: 'ceramic', label: 'سيراميك', defaultPricePerSqm: 85, defaultWastePercent: 10 },
-  { id: 'porcelain', label: 'بورسلان', defaultPricePerSqm: 125, defaultWastePercent: 10 },
-  { id: 'marble', label: 'رخام', defaultPricePerSqm: 240, defaultWastePercent: 12 },
-  { id: 'parquet', label: 'باركيه', defaultPricePerSqm: 110, defaultWastePercent: 8 },
-  { id: 'carpet', label: 'فرش (موكيت)', defaultPricePerSqm: 50, defaultWastePercent: 5 },
-  { id: 'tiles', label: 'بلاط', defaultPricePerSqm: 65, defaultWastePercent: 10 },
-  { id: 'custom', label: 'مادة مخصصة', defaultPricePerSqm: 100, defaultWastePercent: 10 },
+  {
+    id: 'ceramic',
+    label: 'سيراميك',
+    defaultPricePerSqm: 85,
+    defaultWastePercent: 10,
+    supportsBoxCoverage: true,
+    supportsSkirting: true,
+  },
+  {
+    id: 'porcelain',
+    label: 'بورسلان',
+    defaultPricePerSqm: 125,
+    defaultWastePercent: 10,
+    supportsBoxCoverage: true,
+    supportsSkirting: true,
+  },
+  {
+    id: 'marble',
+    label: 'رخام',
+    defaultPricePerSqm: 240,
+    defaultWastePercent: 12,
+    supportsBoxCoverage: false,
+    supportsSkirting: true,
+  },
+  {
+    id: 'parquet',
+    label: 'باركيه',
+    defaultPricePerSqm: 110,
+    defaultWastePercent: 8,
+    supportsBoxCoverage: true,
+    supportsSkirting: true,
+  },
+  {
+    id: 'carpet',
+    label: 'فرش (موكيت)',
+    defaultPricePerSqm: 50,
+    defaultWastePercent: 5,
+    supportsBoxCoverage: false,
+    supportsSkirting: false,
+  },
+  {
+    id: 'tiles',
+    label: 'بلاط',
+    defaultPricePerSqm: 65,
+    defaultWastePercent: 10,
+    supportsBoxCoverage: true,
+    supportsSkirting: true,
+  },
+  {
+    id: 'custom',
+    label: 'مادة مخصصة',
+    defaultPricePerSqm: 100,
+    defaultWastePercent: 10,
+    supportsBoxCoverage: true,
+    supportsSkirting: true,
+  },
 ];
 
 export const CURRENCIES: CurrencyOption[] = [

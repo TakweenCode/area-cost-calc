@@ -34,9 +34,11 @@ import {
   BoxIcon,
   CalculatorIcon,
   CheckIcon,
+  CloseIcon,
   CopyIcon,
   DuplicateIcon,
   EditIcon,
+  InfoIcon,
   PercentIcon,
   PlusIcon,
   PrinterIcon,
@@ -240,6 +242,7 @@ const Calculator: React.FC = () => {
   const [showSavedProjects, setShowSavedProjects] = useState<boolean>(false);
   const [savedNotice, setSavedNotice] = useState<boolean>(false);
   const [confirmingReset, setConfirmingReset] = useState<boolean>(false);
+  const [showOperationHelp, setShowOperationHelp] = useState<boolean>(false);
 
   const [copied, setCopied] = useState(false);
   const copyTimerRef = useRef<number | null>(null);
@@ -247,6 +250,7 @@ const Calculator: React.FC = () => {
   const draftNameRef = useRef<HTMLInputElement | null>(null);
   const summaryRef = useRef<HTMLElement | null>(null);
   const errorBannerRef = useRef<HTMLParagraphElement | null>(null);
+  const operationHelpRef = useRef<HTMLDivElement | null>(null);
 
   const currentSnapshot = useMemo<CalculatorProjectSnapshot>(
     () => ({
@@ -315,6 +319,29 @@ const Calculator: React.FC = () => {
       if (saveTimerRef.current) window.clearTimeout(saveTimerRef.current);
     };
   }, []);
+
+  useEffect(() => {
+    if (!showOperationHelp) return;
+    const handlePointerDown = (e: PointerEvent) => {
+      if (
+        operationHelpRef.current &&
+        !operationHelpRef.current.contains(e.target as Node)
+      ) {
+        setShowOperationHelp(false);
+      }
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setShowOperationHelp(false);
+      }
+    };
+    document.addEventListener('pointerdown', handlePointerDown);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showOperationHelp]);
 
   const currentCurrency = useMemo(
     () => CURRENCIES.find((c) => c.code === currency) ?? CURRENCIES[0],
@@ -560,15 +587,16 @@ const Calculator: React.FC = () => {
       ? 'لا يمكن أن يتجاوز الخصم 100%'
       : undefined;
 
-  const runCompute = (snap: CalculatorProjectSnapshot) =>
-    calculateProjectCost({
+  const runCompute = (snap: CalculatorProjectSnapshot) => {
+    const prod = PRODUCTS.find((p) => p.id === snap.selectedProduct) ?? PRODUCTS[0];
+    return calculateProjectCost({
       areas: snap.areas,
       unit: snap.unit,
       pricePerUnit: snap.pricePerUnit,
       priceIncludesVat: snap.priceIncludesVat,
       wastePercentage: snap.wastePercentage,
-      boxCoverage: snap.boxCoverage,
-      includeSkirting: snap.includeSkirting,
+      boxCoverage: prod.supportsBoxCoverage ? snap.boxCoverage : '',
+      includeSkirting: prod.supportsSkirting ? snap.includeSkirting : false,
       skirtingPricePerUnit: snap.skirtingPricePerUnit,
       skirtingDeduction: snap.skirtingDeduction,
       installationCost: snap.installationCost,
@@ -579,6 +607,7 @@ const Calculator: React.FC = () => {
       vatPercentage: snap.vatPercentage,
       vatScope: snap.vatScope,
     });
+  };
 
   const scrollToErrorOnMobile = () => {
     if (typeof window !== 'undefined' && window.innerWidth < 1024) {
@@ -1042,10 +1071,70 @@ const Calculator: React.FC = () => {
                   />
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
-                    نوع الإدخال
-                  </label>
+                <div ref={operationHelpRef} className="relative">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <div className="flex items-center gap-1.5">
+                      <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                        نوع الإدخال
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShowOperationHelp((v) => !v)}
+                        aria-expanded={showOperationHelp}
+                        aria-controls="operation-help-popover"
+                        aria-label="توضيح المقصود بنوع الإدخال"
+                        title="ما المقصود بنوع الإدخال؟"
+                        className={`inline-flex items-center justify-center w-8 h-8 -my-1.5 rounded-full transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 ${
+                          showOperationHelp
+                            ? 'bg-teal-100 dark:bg-teal-900/60 text-teal-700 dark:text-teal-300'
+                            : 'text-slate-500 dark:text-slate-400 hover:bg-slate-200/70 dark:hover:bg-slate-700/70 hover:text-teal-700 dark:hover:text-teal-300'
+                        }`}
+                      >
+                        <InfoIcon className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {showOperationHelp && (
+                    <div
+                      id="operation-help-popover"
+                      role="dialog"
+                      aria-label="توضيح نوع الإدخال"
+                      className="absolute z-30 top-full inset-x-0 sm:inset-x-auto sm:start-0 sm:w-80 mt-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-xl p-4 text-xs space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm">
+                          توضيح نوع الإدخال
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => setShowOperationHelp(false)}
+                          aria-label="إغلاق التوضيح"
+                          className="min-w-[32px] min-h-[32px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-white transition-colors"
+                        >
+                          <CloseIcon className="w-4 h-4" />
+                        </button>
+                      </div>
+
+                      <div className="space-y-2 text-slate-600 dark:text-slate-300 leading-relaxed">
+                        <p>
+                          <strong className="text-teal-700 dark:text-teal-400">إضافة (+):</strong>{' '}
+                          للمساحات الأساسية المطلوب تغطيتها مثل الغرف والصالات والممرات.
+                        </p>
+                        <p>
+                          <strong className="text-amber-700 dark:text-amber-400">
+                            طرح مستثنى (−):
+                          </strong>{' '}
+                          لخصم الأجزاء غير المغطاة داخل الغرفة مثل جزيرة المطبخ أو الأعمدة أو الخزائن
+                          الثابتة.
+                        </p>
+                        <p className="pt-2 border-t border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                          مثال: مطبخ 20 م² (إضافة) − جزيرة 2 م² (طرح) = 18 م² صافية.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   <SegmentedControl
                     ariaLabel="نوع إدخال المساحة"
                     options={[
@@ -1274,8 +1363,12 @@ const Calculator: React.FC = () => {
               </div>
             </div>
 
-            {/* Waste % + Carton/Box Coverage */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Waste % + Conditional Carton/Box Coverage */}
+            <div
+              className={`grid grid-cols-1 ${
+                currentProduct.supportsBoxCoverage ? 'sm:grid-cols-2' : ''
+              } gap-4`}
+            >
               <InputControl
                 id="waste"
                 label="نسبة الهدر والقص"
@@ -1290,79 +1383,83 @@ const Calculator: React.FC = () => {
                 hint="تغطي فواصل القص والكسر (عادة 5% – 12%)"
               />
 
-              <InputControl
-                id="box-coverage"
-                label="تغطية الكرتون الواحد (اختياري)"
-                icon={<BoxIcon className="w-4 h-4" />}
-                value={boxCoverage}
-                onChange={(val) => {
-                  setBoxCoverage(val);
-                  markDirty();
-                }}
-                unit={areaUnit}
-                placeholder="مثال: 1.44"
-                hint="يُقرّب الكمية لأقرب كرتون كامل عند إدخاله"
-              />
-            </div>
-
-            {/* Optional Skirting / Baseboard Calculation */}
-            <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-3.5 space-y-3">
-              <div className="flex flex-wrap items-center justify-between gap-2">
-                <label
-                  htmlFor="include-skirting"
-                  className="inline-flex items-center gap-2.5 min-h-[44px] sm:min-h-0 cursor-pointer select-none"
-                >
-                  <input
-                    id="include-skirting"
-                    type="checkbox"
-                    checked={includeSkirting}
-                    onChange={(e) => {
-                      setIncludeSkirting(e.target.checked);
-                      markDirty();
-                    }}
-                    className="w-5 h-5 sm:w-4 sm:h-4 rounded border-slate-300 dark:border-slate-600 text-teal-700 focus:ring-teal-600 shrink-0"
-                  />
-                  <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    إضافة حساب الوزرة / النعلات (محيط الغرف)
-                  </span>
-                </label>
-
-                {liveAreaStats.perimeter > 0 && (
-                  <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
-                    محيط الغرف: {formatNumber(liveAreaStats.perimeter)} {dimensionUnit}
-                  </span>
-                )}
-              </div>
-
-              {includeSkirting && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                  <InputControl
-                    id="skirting-price"
-                    label={`سعر الوزرة (${linearUnitLabel})`}
-                    icon={<TagIcon className="w-4 h-4" />}
-                    value={skirtingPricePerUnit}
-                    onChange={(val) => {
-                      setSkirtingPricePerUnit(val);
-                      markDirty();
-                    }}
-                    unit={currentCurrency.symbol}
-                  />
-
-                  <InputControl
-                    id="skirting-deduction"
-                    label="خصم فتحات الأبواب (اختياري)"
-                    icon={<RulerIcon className="w-4 h-4" />}
-                    value={skirtingDeduction}
-                    onChange={(val) => {
-                      setSkirtingDeduction(val);
-                      markDirty();
-                    }}
-                    unit={dimensionUnit}
-                    hint="مجموع عرض الأبواب المستثناة من الوزرة"
-                  />
-                </div>
+              {currentProduct.supportsBoxCoverage && (
+                <InputControl
+                  id="box-coverage"
+                  label="تغطية الكرتون الواحد (اختياري)"
+                  icon={<BoxIcon className="w-4 h-4" />}
+                  value={boxCoverage}
+                  onChange={(val) => {
+                    setBoxCoverage(val);
+                    markDirty();
+                  }}
+                  unit={areaUnit}
+                  placeholder="مثال: 1.44"
+                  hint="يُقرّب الكمية لأقرب كرتون كامل عند إدخاله"
+                />
               )}
             </div>
+
+            {/* Optional Skirting / Baseboard Calculation (hidden for carpet/moquette) */}
+            {currentProduct.supportsSkirting && (
+              <div className="rounded-lg border border-slate-200 dark:border-slate-800 p-3.5 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <label
+                    htmlFor="include-skirting"
+                    className="inline-flex items-center gap-2.5 min-h-[44px] sm:min-h-0 cursor-pointer select-none"
+                  >
+                    <input
+                      id="include-skirting"
+                      type="checkbox"
+                      checked={includeSkirting}
+                      onChange={(e) => {
+                        setIncludeSkirting(e.target.checked);
+                        markDirty();
+                      }}
+                      className="w-5 h-5 sm:w-4 sm:h-4 rounded border-slate-300 dark:border-slate-600 text-teal-700 focus:ring-teal-600 shrink-0"
+                    />
+                    <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                      إضافة حساب الوزرة / النعلات (محيط الغرف)
+                    </span>
+                  </label>
+
+                  {liveAreaStats.perimeter > 0 && (
+                    <span className="text-xs text-slate-500 dark:text-slate-400 tabular-nums">
+                      محيط الغرف: {formatNumber(liveAreaStats.perimeter)} {dimensionUnit}
+                    </span>
+                  )}
+                </div>
+
+                {includeSkirting && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <InputControl
+                      id="skirting-price"
+                      label={`سعر الوزرة (${linearUnitLabel})`}
+                      icon={<TagIcon className="w-4 h-4" />}
+                      value={skirtingPricePerUnit}
+                      onChange={(val) => {
+                        setSkirtingPricePerUnit(val);
+                        markDirty();
+                      }}
+                      unit={currentCurrency.symbol}
+                    />
+
+                    <InputControl
+                      id="skirting-deduction"
+                      label="خصم فتحات الأبواب (اختياري)"
+                      icon={<RulerIcon className="w-4 h-4" />}
+                      value={skirtingDeduction}
+                      onChange={(val) => {
+                        setSkirtingDeduction(val);
+                        markDirty();
+                      }}
+                      unit={dimensionUnit}
+                      hint="مجموع عرض الأبواب المستثناة من الوزرة"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Installation Cost & Mode */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">

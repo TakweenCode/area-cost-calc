@@ -28,6 +28,8 @@ export interface Product {
   label: string;
   defaultPricePerSqm: number;
   defaultWastePercent: number;
+  supportsBoxCoverage: boolean;
+  supportsSkirting: boolean;
 }
 
 export interface Area {
