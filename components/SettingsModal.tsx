@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { CloseIcon, TelegramIcon } from './Icons';
+import { usePWAInstall } from '../hooks/usePWAInstall';
+import { CheckIcon, CloseIcon, DownloadIcon, ShareIcon, TelegramIcon } from './Icons';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -7,6 +8,8 @@ interface SettingsModalProps {
 }
 
 const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
+  const { isInstallable, isInstalled, install } = usePWAInstall();
+
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -50,7 +53,68 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
         {/* Body */}
         <div className="p-5 sm:p-6 space-y-6 overflow-y-auto">
-          {/* 1. Developer Contact */}
+          {/* 1. Home Screen Installation Guide */}
+          <section className="space-y-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+              تثبيت التطبيق على الشاشة الرئيسية
+            </h3>
+
+            {isInstalled ? (
+              <p className="flex items-center gap-2 text-sm font-medium text-teal-700 dark:text-teal-400">
+                <CheckIcon className="w-4 h-4 shrink-0" />
+                <span>التطبيق مثبّت ويعمل كتطبيق مستقل على جهازك.</span>
+              </p>
+            ) : (
+              <>
+                {isInstallable && (
+                  <button
+                    type="button"
+                    onClick={install}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 min-h-[44px] px-4 py-2.5 rounded-lg bg-teal-700 hover:bg-teal-600 dark:bg-teal-600 dark:hover:bg-teal-500 text-white text-sm font-semibold transition-colors whitespace-nowrap focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                  >
+                    <DownloadIcon className="w-4 h-4 shrink-0" />
+                    <span>تثبيت التطبيق الآن</span>
+                  </button>
+                )}
+
+                <div className="space-y-3 text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3.5 space-y-1.5">
+                    <p className="font-bold text-slate-900 dark:text-slate-100">
+                      آيفون (سفاري):
+                    </p>
+                    <p>
+                      1. اضغط زر <strong>المشاركة</strong>{' '}
+                      <span className="inline-flex items-center align-middle text-teal-700 dark:text-teal-400 mx-0.5">
+                        <ShareIcon className="w-4 h-4" />
+                      </span>{' '}
+                      (أيقونة المربع والسهم) أسفل الشاشة.
+                    </p>
+                    <p>
+                      2. اختر <strong>إضافة إلى الصفحة الرئيسية</strong> ثم اضغط{' '}
+                      <strong>إضافة</strong>.
+                    </p>
+                  </div>
+
+                  <div className="rounded-lg bg-slate-50 dark:bg-slate-800/50 p-3.5 space-y-1.5">
+                    <p className="font-bold text-slate-900 dark:text-slate-100">
+                      أندرويد (كروم):
+                    </p>
+                    <p>
+                      1. اضغط على قائمة المتصفح (<strong>⋮</strong> ثلاث نقاط) أعلى الشاشة.
+                    </p>
+                    <p>
+                      2. اختر <strong>تثبيت التطبيق</strong> أو{' '}
+                      <strong>الإضافة إلى الشاشة الرئيسية</strong> ثم أكّد التثبيت.
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
+          </section>
+
+          <hr className="border-slate-200 dark:border-slate-800" />
+
+          {/* 2. Developer Contact */}
           <section className="space-y-3">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               التواصل مع المطوّر
@@ -74,7 +138,7 @@ const SettingsModal: React.FC<SettingsModalProps> = ({ isOpen, onClose }) => {
 
           <hr className="border-slate-200 dark:border-slate-800" />
 
-          {/* 2. Disclaimer */}
+          {/* 3. Disclaimer */}
           <section className="space-y-2">
             <h3 className="text-sm font-bold text-slate-900 dark:text-slate-100">
               إخلاء المسؤولية
