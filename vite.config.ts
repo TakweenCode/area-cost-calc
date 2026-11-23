@@ -4,8 +4,27 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+function resolveSiteUrl(env: Record<string, string>): string | null {
+  const explicitUrl = env.VITE_SITE_URL || process.env.VITE_SITE_URL;
+  if (explicitUrl && /^https?:\/\//i.test(explicitUrl)) {
+    return explicitUrl.endsWith('/') ? explicitUrl : `${explicitUrl}/`;
+  }
+
+  const githubRepo = process.env.GITHUB_REPOSITORY;
+  if (githubRepo && githubRepo.includes('/')) {
+    const [owner, repo] = githubRepo.split('/');
+    if (repo.toLowerCase() === `${owner.toLowerCase()}.github.io`) {
+      return `https://${owner}.github.io/`;
+    }
+    return `https://${owner}.github.io/${repo}/`;
+  }
+
+  return null;
+}
+
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, '.', '');
+    const resolvedSiteUrl = resolveSiteUrl(env);
     return {
       base: './',
       server: {
@@ -13,6 +32,13 @@ export default defineConfig(({ mode }) => {
         host: '0.0.0.0',
       },
       plugins: [
+        {
+          name: 'social-meta-site-url',
+          transformIndexHtml(html) {
+            if (!resolvedSiteUrl) return html;
+            return html.replaceAll('https://<username>.github.io/<repo-name>/', resolvedSiteUrl);
+          },
+        },
         react(),
         tailwindcss(),
         VitePWA({
@@ -67,7 +93,7 @@ export default defineConfig(({ mode }) => {
           },
           workbox: {
             globPatterns: ['**/*.{js,css,html,ico,png,svg,woff,woff2}'],
-            globIgnores: ['**/assets/aistudio/**'],
+            globIgnores: ['**/assets/aistudio/**', '**/og-image.png'],
             runtimeCaching: [
               {
                 urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
